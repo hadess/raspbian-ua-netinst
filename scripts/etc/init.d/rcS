@@ -571,7 +571,7 @@ echo -n "Updating package lists... "
 chroot /rootfs /usr/bin/apt-get update &>/dev/null
 echo "OK"
 
-# firmware package can't be installed during cdebootstrap fase, so do so now
+# firmware package can't be installed during cdebootstrap phase, so do so now
 if [ "$kernel_module" = true ] ; then
   echo -n "Installing bootloader package (=firmware)... "
   chroot /rootfs /usr/bin/apt-get -y install raspberrypi-bootloader-nokernel &>/dev/null
