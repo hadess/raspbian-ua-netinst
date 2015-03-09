@@ -149,7 +149,7 @@ if [ -e /bootfs/installer-config.txt ]; then
     echo "================================================="
     echo "=== Start executing installer-config.txt. ==="
     sanitize_inputfile /bootfs/installer-config.txt
-    source /bootfs/installer-config.txt
+    source /bootfs/installer-config.txt || fail
     echo "=== Finished executing installer-config.txt. ==="
     echo "================================================="
 fi
@@ -279,7 +279,7 @@ if [ "$online_config" != "" ]; then
     echo "================================================="
     echo "=== Start executing online-config.txt. ==="
     sanitize_inputfile /online-config.txt
-    source /online-config.txt
+    source /online-config.txt || fail
     echo "=== Finished executing online-config.txt. ==="
     echo "================================================="
 fi
@@ -637,7 +637,7 @@ if [ -e /bootfs/post-install.txt ]; then
     echo "================================================="
     echo "=== Start executing post-install.txt. ==="
     sanitize_inputfile /bootfs/post-install.txt
-    source /bootfs/post-install.txt
+    source /bootfs/post-install.txt || fail
     echo "=== Finished executing post-install.txt. ==="
     echo "================================================="
 fi
