@@ -135,6 +135,7 @@ The format of the file and the current defaults:
     rootfs_install_mount_options='noatime,data=writeback,nobarrier,noinit_itable'
     rootfs_mount_options='errors=remount-ro,noatime'
     rebootonerror=true
+    proxy=
 
 All of the configuration options should be clear. You can override any of these in your _installer-config.txt_ by placing your own `installer-config.txt` in the main directory.  
 The time server is only used during installation and is for _rdate_ which doesn't support the NTP protocol.  

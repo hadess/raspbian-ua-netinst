@@ -24,6 +24,7 @@ usbroot=
 cmdline="dwc_otg.lpm_enable=0 console=ttyAMA0,115200 kgdboc=ttyAMA0,115200 console=tty1 elevator=deadline"
 rootfstype=ext4
 rebootonerror=true
+proxy=
 
 # these shouldn't really be changed unless auto-detection fails
 bootdev=/dev/mmcblk0
@@ -470,7 +471,7 @@ if [ "$kernel_module" = true ] ; then
 fi
 
 echo "Starting install process..."
-cdebootstrap-static --arch=armhf $cdebootstrap_cmdline $release /rootfs $mirror --keyring=/usr/share/keyrings/raspbian-archive-keyring.gpg || fail
+http_proxy=$proxy cdebootstrap-static --arch=armhf $cdebootstrap_cmdline $release /rootfs $mirror --keyring=/usr/share/keyrings/raspbian-archive-keyring.gpg || fail
 
 # allow root login
 echo "Configuring installed system:"
@@ -556,6 +557,9 @@ echo -n "Configuring apt... "
 echo "deb http://mirrordirector.raspbian.org/raspbian $release main firmware" > /rootfs/etc/apt/sources.list
 echo "deb http://archive.raspberrypi.org/debian wheezy main" >> /rootfs/etc/apt/sources.list
 cat /usr/share/keyrings/raspberrypi.gpg.key | chroot /rootfs /usr/bin/apt-key add - &>/dev/null
+if [ "$proxy" != "" ] ; then
+  echo "Acquire::http { Proxy \"$proxy\"; };" > /rootfs/etc/apt/apt.conf.d/02proxy
+fi
 echo "OK"
 
 # add preferences file to install libraspberrypi-bin and friends (for vcgencmd) from the raspbian archives
@@ -641,6 +645,9 @@ if [ -e /bootfs/post-install.txt ]; then
     echo "=== Finished executing post-install.txt. ==="
     echo "================================================="
 fi
+
+# Remove the custom proxy
+rm -f /rootfs/etc/apt/apt.conf.d/02proxy
 
 # save current time if fake-hwclock
 echo "Saving current time for fake-hwclock..."
