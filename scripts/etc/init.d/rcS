@@ -480,7 +480,7 @@ echo "OK"
 
 # default mounts
 echo -n "  Configuring /etc/fstab... "
-echo "$bootpartition /boot vfat defaults 0 2" > /rootfs/etc/fstab || fail
+echo "$bootpartition /boot vfat defaults,rw,umask=000 0 2" > /rootfs/etc/fstab || fail
 if [ "$rootfstype" = "f2fs" ]; then
 	echo "$rootpartition / $rootfstype $rootfs_mount_options 0 0" >> /rootfs/etc/fstab || fail
 elif [ "$rootfstype" = "btrfs" ]; then
