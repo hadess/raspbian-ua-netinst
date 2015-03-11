@@ -27,10 +27,10 @@ rebootonerror=true
 proxy=
 
 # these shouldn't really be changed unless auto-detection fails
-bootdev=/dev/mmcblk0
-bootpartition=/dev/mmcblk0p1
-rootdev=/dev/mmcblk0
-rootpartition=
+bootdev=/dev/sda
+bootpartition=/dev/sda1
+rootdev=/dev/sda
+rootpartition=/dev/sda2
 
 fail()
 {
@@ -139,7 +139,7 @@ echo "================================================="
 
 echo -n "Copying boot files... "
 # copy boot data to safety
-mount $bootpartition /boot || fail
+mount $bootdev /boot || fail
 
 cp -r /boot/* /bootfs/ || fail
 
