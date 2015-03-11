@@ -1,0 +1,119 @@
+# WAAAIT!!!
+# read -s
+# set -x
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+#Fail if any of the commands fail
+set -e
+
+#Remove openssh-server, we already have dropbear
+chroot /rootfs /usr/bin/apt-get -y remove openssh-server
+
+#Fix setuptools installation
+chroot /rootfs /usr/bin/wget -O /tmp/ez_setup.py https://bootstrap.pypa.io/ez_setup.py
+chroot /rootfs /usr/bin/python /tmp/ez_setup.py
+
+#mopidy from pip
+chroot /rootfs /usr/bin/pip install -U mopidy mopidy-local-sqlite mopidy-local-whoosh mopidy-scrobbler mopidy-soundcloud mopidy-dirble mopidy-tunein mopidy-gmusic mopidy-subsonic mopidy-http-kuechenradio mopidy-moped mopidy-musicbox-webclient mopidy-websettings mopidy-internetarchive mopidy-podcast mopidy-podcast-itunes mopidy-podcast-gpodder.net Mopidy-Simple-Webclient mopidy-somafm mopidy-youtube
+# FIXME add mopidy-spotify mopidy-spotify-tunigo once they build
+
+#Google Music works a lot better if you use the development version of mopidy-gmusic:
+chroot /rootfs /usr/bin/pip install https://github.com/hechtus/mopidy-gmusic/archive/develop.zip
+
+#**Configuration and Files**
+
+#Get the files of the Pi MusicBox project
+# FIXME use https://github.com/woutervanwijk/Pi-MusicBox/archive/${branch}.zip instead
+branch_name=develop
+chroot /rootfs /usr/bin/wget -O /opt/${branch_name}.zip  https://github.com/hadess/Pi-MusicBox/archive/${branch_name}.zip
+
+#Unpack the zip-file and remove it if you want.
+cd /rootfs/opt
+unzip ${branch_name}.zip
+rm ${branch_name}.zip
+
+#Then go to the directory which you just unpacked, subdirectory ‘filechanges’:
+cd Pi-MusicBox-${branch_name}/filechanges
+
+#Now we are going to copy some files. Backup the old ones if you’re not sure!
+#This sets up the boot and opt directories:
+#manually copy cmdline.txt and config.txt if you want
+mkdir /rootfs/boot/config
+cp -R boot/config /rootfs/boot/config
+cp -R opt/* /rootfs/opt
+
+#Make the system work:
+cp -R etc/* /rootfs/etc
+
+chmod +x /rootfs/etc/network/if-up.d/iptables
+#Note: in a chroot so that the user exists
+chroot /rootfs /bin/chown root:root /etc/firewall/musicbox_iptables
+chmod 600 /rootfs/etc/firewall/musicbox_iptables
+
+#Next, create a symlink from the package to the /opt/defaultwebclient.
+chroot /rootfs /bin/ln -fsn /usr/local/lib/python2.7/dist-packages/mopidy_musicbox_webclient/static /opt/webclient
+chroot /rootfs /bin/ln -fsn /opt/webclient /opt/defaultwebclient
+
+#Remove the streamuris.js and point it to the file in /boot/config
+rm -f /rootfs/usr/local/lib/python2.7/dist-packages/mopidy_musicbox_webclient/static/js/streamuris.js
+chroot /rootfs /bin/ln -fsn /boot/config/streamuris.js /usr/local/lib/python2.7/dist-packages/mopidy_musicbox_webclient/static/js/streamuris.js
+
+#Let everyone shutdown the system (to support it from the webclient):
+chmod u+s /rootfs/sbin/shutdown
+
+#**Add the mopidy user**
+#Mopidy runs under the user mopidy. Add it.
+chroot /rootfs /usr/sbin/useradd -m mopidy
+chroot /rootfs /usr/bin/passwd -l mopidy
+
+#Add the user to the group audio:
+chroot /rootfs /usr/sbin/usermod -a -G audio mopidy
+
+#Create a couple of directories inside the user dir:
+mkdir -p /rootfs/home/mopidy/.config/mopidy
+mkdir -p /rootfs/home/mopidy/.cache/mopidy
+mkdir -p /rootfs/home/mopidy/.local/share/mopidy
+#Note: in a chroot so that the user exists
+chroot /rootfs chown -R mopidy:mopidy /home/mopidy
+
+#**Create Music directory for MP3/OGG/FLAC **
+#Create the directory containing the music and the one where the network share is mounted:
+mkdir -p /rootfs/music/MusicBox
+mkdir -p /rootfs/music/Network
+mkdir -p /rootfs/music/USB
+mkdir -p /rootfs/music/USB2
+mkdir -p /rootfs/music/USB3
+mkdir -p /rootfs/music/USB4
+chmod -R 777 /rootfs/music
+chroot /rootfs chown -R mopidy:mopidy /music
+
+#Disable the SSH service for more security if you want (it can be started with an option in the configuration-file):
+chroot /rootfs update-rc.d ssh disable
+
+#Link the mopidy configuration to the new one in /boot/config
+chroot /rootfs /bin/ln -fsn /boot/config/settings.ini /home/mopidy/.config/mopidy/mopidy.conf
+mkdir -p /rootfs/var/lib/mopidy/.config/mopidy
+chroot /rootfs /bin/ln -fsn /boot/config/settings.ini /var/lib/mopidy/.config/mopidy/mopidy.conf
+
+#**Optimizations**
+#For the music to play without cracks, you have to optimize your system a bit.
+#For MusicBox, these are the optimizations:
+
+#**USB Fix**
+#It's tricky to get good sound out of the Pi. For USB Audio (sound cards, etc),
+# it is essential to disable the so called FIQ_SPLIT. Why? It seems that audio
+# at high nitrates interferes with the ethernet activity, which also runs over USB.
+# These options are added at the beginning of the cmdline.txt file in /boot
+sed -i '1s/^/dwc_otg.fiq_fix_enable=1 dwc_otg.fiq_split_enable=0 smsc95xx.turbo_mode=N /' /rootfs/boot/cmdline.txt
+
+#cleanup
+chroot /rootfs /usr/bin/apt-get -y remove build-essential git gcc cpp debian-reference-common g++ make linux-libc-dev python-dev python-pip
+chroot /rootfs /usr/bin/apt-get -y autoremove
+chroot /rootfs /usr/bin/apt-get -y clean
+chroot /rootfs /usr/bin/apt-get -y autoclean
+rm -rf /rootfs/tmp/*
+
+#other options to be done by hand. Won't do it automatically on a running system
+
+cd /

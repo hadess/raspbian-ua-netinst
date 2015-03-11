@@ -1,0 +1,8 @@
+preset=minimal
+packages=less,logrotate,alsa-utils,wpasupplicant,gstreamer0.10-alsa,ifplugd,gstreamer0.10-fluendo-mp3,gstreamer0.10-tools,samba,dos2unix,avahi-utils,alsa-base,cifs-utils,avahi-autoipd,libnss-mdns,ntpdate,ca-certificates,ncmpcpp,rpi-update,linux-wlan-ng,alsa-firmware-loaders,iw,atmel-firmware,firmware-atheros,firmware-brcm80211,firmware-ipw2x00,firmware-iwlwifi,firmware-libertas,firmware-linux,firmware-linux-nonfree,firmware-ralink,firmware-realtek,zd1211-firmware,linux-wlan-ng-firmware,iptables,build-essential,python-dev,python-pip,python-gst0.10,python-pkg-resources,python-setuptools,gstreamer0.10-plugins-good,gstreamer0.10-plugins-bad,gstreamer0.10-plugins-ugly,usbmount,monit,upmpdcli,watchdog,dropbear,mpc,dosfstools,wget,build-essential,vim-tiny
+hostname=MusicBox
+domainname=
+rootpw=musicbox
+cmdline="dwc_otg.lpm_enable=0 console=ttyAMA0,115200 kgdboc=ttyAMA0,115200 console=tty1 elevator=deadline"
+rebootonerror=
+proxy=http://192.168.0.13:3142
